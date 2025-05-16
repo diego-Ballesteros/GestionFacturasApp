@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.11.35327.3
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Facturacion.API", "Facturacion.API\Facturacion.API.csproj", "{131FE2BE-9F0A-4867-9015-6743E944E1DF}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{131FE2BE-9F0A-4867-9015-6743E944E1DF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{131FE2BE-9F0A-4867-9015-6743E944E1DF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{131FE2BE-9F0A-4867-9015-6743E944E1DF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{131FE2BE-9F0A-4867-9015-6743E944E1DF}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {7CFAE1F9-B0D4-45CF-BDF3-260DA0877EBF}
+	EndGlobalSection
+EndGlobal
