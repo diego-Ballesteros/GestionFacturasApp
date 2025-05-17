@@ -1,5 +1,5 @@
 ﻿using FluentValidation;
-namespace Facturacion.API.Application.Features.Invoices.Commands.Create;
+namespace Facturacion.API.Application.Features.Invoices.Commands.Create.Validators;
 
 public class CreateInvoiceDetailDtoValidator : AbstractValidator<CreateInvoiceDetailDto>
 {

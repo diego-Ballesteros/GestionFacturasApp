@@ -1,4 +1,5 @@
 ﻿using Facturacion.API.Application.Features.Invoices.Commands.Create;
+using Facturacion.API.Application.Features.Invoices.Queries.GetAll;
 using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Http;
@@ -37,6 +38,23 @@ public class InvoicesController : ControllerBase
         catch (System.Exception ex) 
         {
             return StatusCode(StatusCodes.Status500InternalServerError, new { Message = "An unexpected error occurred. Please try again later.", Details = ex.Message });
+        }
+    }
+
+    [HttpGet]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<InvoiceSummaryDto>))]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<ActionResult<List<InvoiceSummaryDto>>> GetAllInvoices()
+    {
+        try
+        {
+            var query = new GetAllInvoicesQuery(); 
+            var invoices = await _mediator.Send(query); 
+            return Ok(invoices); 
+        }
+        catch (System.Exception ex)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, new { Message = "An unexpected error occurred while retrieving invoices.", Details = ex.Message });
         }
     }
 
