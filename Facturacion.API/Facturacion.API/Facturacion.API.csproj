@@ -22,7 +22,6 @@
 
   <ItemGroup>
     <Folder Include="Application\Common\Interfaces\" />
-    <Folder Include="Application\Features\Invoices\Queries\" />
     <Folder Include="Application\DTOs\" />
   </ItemGroup>
 
