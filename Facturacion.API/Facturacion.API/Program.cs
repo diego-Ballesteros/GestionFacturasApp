@@ -4,6 +4,7 @@ using FluentValidation.AspNetCore;
 using System.Reflection;
 using AutoMapper;
 using FluentValidation;
+using Facturacion.API.Middlewares;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,11 +28,20 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
+app.UseGlobalExceptionHandler();
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+    //app.UseDeveloperExceptionPage();
+}
+else
+{
+    //app.UseGlobalExceptionHandler(); 
+    // app.UseExceptionHandler("/Error"); 
+    app.UseHsts(); // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
 }
 
 app.UseHttpsRedirection();
