@@ -1,0 +1,17 @@
+﻿using AutoMapper;
+using Facturacion.API.Application.Features.Invoices.Commands.Create;
+using Facturacion.API.Domain.Entities;
+
+namespace Invoicing.API.Application.Common.Mappings;
+
+public class InvoiceMappingProfile : Profile 
+{
+    public InvoiceMappingProfile()
+    {
+        CreateMap<CreateInvoiceCommand, Invoice>()
+            .ForMember(dest => dest.Details, opt => opt.MapFrom(src => src.Details)); 
+
+        CreateMap<CreateInvoiceDetailDto, InvoiceDetail>();
+        
+    }
+}
