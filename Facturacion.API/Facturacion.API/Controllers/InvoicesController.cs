@@ -19,9 +19,9 @@ public class InvoicesController : ControllerBase
     }
     // POST: api/invoices
     [HttpPost]
-    [ProducesResponseType(StatusCodes.Status201Created)] // Respuesta para creación exitosa
-    [ProducesResponseType(StatusCodes.Status400BadRequest)] // Respuesta para errores de validación
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)] // Respuesta para errores inesperados del servidor
+    [ProducesResponseType(StatusCodes.Status201Created)] 
+    [ProducesResponseType(StatusCodes.Status400BadRequest)] 
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)] 
     public async Task<IActionResult> CreateInvoice([FromBody] CreateInvoiceCommand command)
     {
 

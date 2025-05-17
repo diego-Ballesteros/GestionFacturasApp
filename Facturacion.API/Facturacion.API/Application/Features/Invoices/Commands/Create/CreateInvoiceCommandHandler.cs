@@ -19,7 +19,7 @@ public class CreateInvoiceCommandHandler : IRequestHandler<CreateInvoiceCommand,
 
     public async Task<int> Handle(CreateInvoiceCommand command, CancellationToken cancellationToken)
     {
-        
+
         var invoiceEntity = _mapper.Map<Invoice>(command);
 
         decimal calculatedTotalAmount = 0;
@@ -36,7 +36,7 @@ public class CreateInvoiceCommandHandler : IRequestHandler<CreateInvoiceCommand,
         _context.Invoices.Add(invoiceEntity);
 
         await _context.SaveChangesAsync(cancellationToken);
-.
+
         return invoiceEntity.Id;
     }
 }
