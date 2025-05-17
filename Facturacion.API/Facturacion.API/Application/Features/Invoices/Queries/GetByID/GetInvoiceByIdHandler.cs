@@ -1,11 +1,13 @@
 ﻿using AutoMapper;
+using Facturacion.API.Application.Common.Results;
+using Facturacion.API.Domain.Entities;
 using Facturacion.API.Infrastructure.Persistence.Data;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace Facturacion.API.Application.Features.Invoices.Queries.GetByID;
 
-public class GetInvoiceByIdHandler : IRequestHandler<GetInvoiceByIdQuery, InvoiceDto?>
+public class GetInvoiceByIdHandler : IRequestHandler<GetInvoiceByIdQuery, Result<InvoiceDto>>
 {
     private readonly ApplicationDbContext _context;
     private readonly IMapper _mapper;
@@ -16,7 +18,7 @@ public class GetInvoiceByIdHandler : IRequestHandler<GetInvoiceByIdQuery, Invoic
         _mapper = mapper;
     }
 
-    public async Task<InvoiceDto?> Handle(GetInvoiceByIdQuery request, CancellationToken cancellationToken)
+    public async Task<Result<InvoiceDto>> Handle(GetInvoiceByIdQuery request, CancellationToken cancellationToken)
     {
         var invoice = await _context.Invoices
                 .AsNoTracking()
@@ -25,11 +27,11 @@ public class GetInvoiceByIdHandler : IRequestHandler<GetInvoiceByIdQuery, Invoic
 
         if (invoice == null)
         {
-            return null; 
+            return Result.Failure<InvoiceDto>(Error.NotFound(nameof(Invoice), request.Id)); ; 
         }
        
         var invoiceDto = _mapper.Map<InvoiceDto>(invoice);
 
-        return invoiceDto;
+        return Result.Success(invoiceDto);
     }
 }
