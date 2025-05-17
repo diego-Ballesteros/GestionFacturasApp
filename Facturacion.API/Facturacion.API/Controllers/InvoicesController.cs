@@ -1,4 +1,5 @@
 ﻿using Facturacion.API.Application.Features.Invoices.Commands.Create;
+using Facturacion.API.Application.Features.Invoices.Commands.Update;
 using Facturacion.API.Application.Features.Invoices.Queries.GetAll;
 using Facturacion.API.Application.Features.Invoices.Queries.GetByID;
 using FluentValidation;
@@ -80,6 +81,44 @@ public class InvoicesController : ControllerBase
         catch (System.Exception ex)
         {
             return StatusCode(StatusCodes.Status500InternalServerError, new { Message = "An unexpected error occurred while retrieving the invoice.", Details = ex.Message });
+        }
+    }
+
+    [HttpPut("{id}")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(InvoiceDto))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)] 
+    [ProducesResponseType(StatusCodes.Status404NotFound)]   
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> UpdateInvoice(int id, [FromBody] UpdateInvoiceCommand command)
+    {
+        if (id != command.Id && command.Id != 0) 
+        {                                        
+            if (command.Id == 0) command.Id = id;
+            else return BadRequest(new { Message = "Route ID does not match command ID." });
+        }
+        else if (command.Id == 0) 
+        {
+            command.Id = id;
+        }
+        
+        try
+        {
+            var updatedInvoiceDto = await _mediator.Send(command);
+
+            if (updatedInvoiceDto == null)
+            {
+                return NotFound(new { Message = $"Invoice with ID {id} not found for update." });
+            }
+
+            return Ok(updatedInvoiceDto);
+        }
+        catch (FluentValidation.ValidationException ex)
+        {
+            return BadRequest(new { Errors = ex.Errors.Select(e => new { e.PropertyName, e.ErrorMessage }) });
+        }
+        catch (System.Exception ex)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, new { Message = "An unexpected error occurred while updating the invoice.", Details = ex.Message });
         }
     }
 }
