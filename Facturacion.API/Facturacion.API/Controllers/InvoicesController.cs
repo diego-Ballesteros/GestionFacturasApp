@@ -1,5 +1,6 @@
 ﻿using Facturacion.API.Application.Features.Invoices.Commands.Create;
 using Facturacion.API.Application.Features.Invoices.Queries.GetAll;
+using Facturacion.API.Application.Features.Invoices.Queries.GetByID;
 using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Http;
@@ -8,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Facturacion.API.Controllers;
 
-[Route("api/[controller]")]
+[Route("api/invoices")]
 [ApiController]
 public class InvoicesController : ControllerBase
 {
@@ -58,12 +59,27 @@ public class InvoicesController : ControllerBase
         }
     }
 
-    [HttpGet("{id}", Name = "GetInvoiceById")] 
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [HttpGet("{id}", Name = "GetInvoiceById")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(InvoiceDto))]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetInvoiceById(int id)
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<ActionResult<InvoiceDto>> GetInvoiceById(int id)
     {
-        await Task.CompletedTask;
-        return Ok(new { Message = $"Placeholder for GetInvoiceById with ID: {id}. To be implemented." });
+        try
+        {
+            var query = new GetInvoiceByIdQuery(id);
+            var invoice = await _mediator.Send(query);
+
+            if (invoice == null)
+            {
+                return NotFound(new { Message = $"Invoice with ID {id} not found." });
+            }
+
+            return Ok(invoice);
+        }
+        catch (System.Exception ex)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, new { Message = "An unexpected error occurred while retrieving the invoice.", Details = ex.Message });
+        }
     }
 }
