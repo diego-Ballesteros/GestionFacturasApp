@@ -1,4 +1,5 @@
 ﻿using Facturacion.API.Application.Features.Invoices.Commands.Create;
+using Facturacion.API.Application.Features.Invoices.Commands.Delete;
 using Facturacion.API.Application.Features.Invoices.Commands.Update;
 using Facturacion.API.Application.Features.Invoices.Queries.GetAll;
 using Facturacion.API.Application.Features.Invoices.Queries.GetByID;
@@ -119,6 +120,36 @@ public class InvoicesController : ControllerBase
         catch (System.Exception ex)
         {
             return StatusCode(StatusCodes.Status500InternalServerError, new { Message = "An unexpected error occurred while updating the invoice.", Details = ex.Message });
+        }
+    }
+
+    [HttpDelete("{id}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)] 
+    [ProducesResponseType(StatusCodes.Status404NotFound)]   
+    [ProducesResponseType(StatusCodes.Status400BadRequest)] 
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> DeleteInvoice(int id)
+    {
+        var command = new DeleteInvoiceCommand(id);
+
+        try
+        {
+            var result = await _mediator.Send(command);
+
+            if (!result) 
+            {
+                return NotFound(new { Message = $"Invoice with ID {id} not found." });
+            }
+
+            return NoContent(); 
+        }
+        catch (FluentValidation.ValidationException ex) 
+        {
+            return BadRequest(new { Errors = ex.Errors.Select(e => new { e.PropertyName, e.ErrorMessage }) });
+        }
+        catch (System.Exception ex)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, new { Message = "An unexpected error occurred while deleting the invoice.", Details = ex.Message });
         }
     }
 }
