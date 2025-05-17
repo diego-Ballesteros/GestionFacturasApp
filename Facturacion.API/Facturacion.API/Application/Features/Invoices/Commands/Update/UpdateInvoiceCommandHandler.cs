@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Facturacion.API.Application.Common.Results;
 using Facturacion.API.Application.Features.Invoices.Queries.GetByID;
 using Facturacion.API.Domain.Entities;
 using Facturacion.API.Infrastructure.Persistence.Data;
@@ -7,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Facturacion.API.Application.Features.Invoices.Commands.Update;
 
-public class UpdateInvoiceCommandHandler : IRequestHandler<UpdateInvoiceCommand, InvoiceDto?>
+public class UpdateInvoiceCommandHandler : IRequestHandler<UpdateInvoiceCommand, Result<InvoiceDto>>
 {
     private readonly ApplicationDbContext _context;
     private readonly IMapper _mapper;
@@ -18,7 +19,7 @@ public class UpdateInvoiceCommandHandler : IRequestHandler<UpdateInvoiceCommand,
         _mapper = mapper;
     }
 
-    public async Task<InvoiceDto?> Handle(UpdateInvoiceCommand command, CancellationToken cancellationToken)
+    public async Task<Result<InvoiceDto>> Handle(UpdateInvoiceCommand command, CancellationToken cancellationToken)
     {
         var invoiceToUpdate = await _context.Invoices
             .Include(i => i.Details) 
@@ -26,7 +27,7 @@ public class UpdateInvoiceCommandHandler : IRequestHandler<UpdateInvoiceCommand,
 
         if (invoiceToUpdate == null)
         {
-            return null; 
+            return Result.Failure<InvoiceDto>(Error.NotFound(nameof(Invoice), command.Id));
         }
 
         invoiceToUpdate.CustomerName = command.CustomerName;
@@ -55,26 +56,11 @@ public class UpdateInvoiceCommandHandler : IRequestHandler<UpdateInvoiceCommand,
             calculatedTotalAmount += newDetailEntity.Subtotal;
         }
 
-        invoiceToUpdate.TotalAmount = calculatedTotalAmount; 
+        invoiceToUpdate.TotalAmount = calculatedTotalAmount;
 
-       
-        try
-        {
-            await _context.SaveChangesAsync(cancellationToken);
-        }
-        catch (DbUpdateConcurrencyException)
-        {          
-            if (!await _context.Invoices.AnyAsync(i => i.Id == command.Id, cancellationToken))
-            {
-                return null; 
-            }
-            else
-            {
-                throw; 
-            }
-        }
+        await _context.SaveChangesAsync(cancellationToken);
 
         var updatedInvoiceDto = _mapper.Map<InvoiceDto>(invoiceToUpdate);
-        return updatedInvoiceDto;
+        return Result.Success(updatedInvoiceDto);
     }
 }

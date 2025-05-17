@@ -1,12 +1,13 @@
 ﻿using AutoMapper;
 using AutoMapper.QueryableExtensions;
+using Facturacion.API.Application.Common.Results;
 using Facturacion.API.Infrastructure.Persistence.Data;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace Facturacion.API.Application.Features.Invoices.Queries.GetAll;
 
-public class GetAllInvoicesQueryHandler : IRequestHandler<GetAllInvoicesQuery, List<InvoiceSummaryDto>>
+public class GetAllInvoicesQueryHandler : IRequestHandler<GetAllInvoicesQuery, Result<List<InvoiceSummaryDto>>>
 {
     private readonly ApplicationDbContext _context;
     private readonly IMapper _mapper;
@@ -17,7 +18,7 @@ public class GetAllInvoicesQueryHandler : IRequestHandler<GetAllInvoicesQuery, L
         _context = context;
     }
 
-    public async Task<List<InvoiceSummaryDto>> Handle(GetAllInvoicesQuery request, CancellationToken cancellationToken)
+    public async Task<Result<List<InvoiceSummaryDto>>> Handle(GetAllInvoicesQuery request, CancellationToken cancellationToken)
     {
         var invoiceSummaries = await _context.Invoices
             .AsNoTracking()
@@ -25,6 +26,6 @@ public class GetAllInvoicesQueryHandler : IRequestHandler<GetAllInvoicesQuery, L
             .ProjectTo<InvoiceSummaryDto>(_mapper.ConfigurationProvider)
             .ToListAsync(cancellationToken);
 
-        return invoiceSummaries;
+        return Result.Success(invoiceSummaries);
     }
 }

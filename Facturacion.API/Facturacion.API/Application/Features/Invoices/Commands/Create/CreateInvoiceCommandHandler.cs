@@ -3,10 +3,11 @@ using MediatR;
 using Facturacion.API.Domain.Entities; 
 using Facturacion.API.Infrastructure.Persistence.Data;
 using AutoMapper;
+using Facturacion.API.Application.Common.Results;
 
 namespace Facturacion.API.Application.Features.Invoices.Commands.Create;
 
-public class CreateInvoiceCommandHandler : IRequestHandler<CreateInvoiceCommand, int>
+public class CreateInvoiceCommandHandler : IRequestHandler<CreateInvoiceCommand, Result<int>>
 {
     private readonly ApplicationDbContext _context;
     private readonly IMapper _mapper;
@@ -17,7 +18,7 @@ public class CreateInvoiceCommandHandler : IRequestHandler<CreateInvoiceCommand,
         _mapper = mapper;
     }
 
-    public async Task<int> Handle(CreateInvoiceCommand command, CancellationToken cancellationToken)
+    public async Task<Result<int>> Handle(CreateInvoiceCommand command, CancellationToken cancellationToken)
     {
 
         var invoiceEntity = _mapper.Map<Invoice>(command);
@@ -37,6 +38,6 @@ public class CreateInvoiceCommandHandler : IRequestHandler<CreateInvoiceCommand,
 
         await _context.SaveChangesAsync(cancellationToken);
 
-        return invoiceEntity.Id;
+        return Result.Success(invoiceEntity.Id);
     }
 }
