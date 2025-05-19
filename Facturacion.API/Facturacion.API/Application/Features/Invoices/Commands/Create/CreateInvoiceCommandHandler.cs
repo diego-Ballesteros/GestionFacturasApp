@@ -34,8 +34,6 @@ public class CreateInvoiceCommandHandler : IRequestHandler<CreateInvoiceCommand,
 
         invoiceEntity.TotalAmount = calculatedTotalAmount;
 
-        throw new InvalidOperationException("¡Boom! Error de prueba inesperado desde el handler.");
-
         _context.Invoices.Add(invoiceEntity);
 
         await _context.SaveChangesAsync(cancellationToken);
