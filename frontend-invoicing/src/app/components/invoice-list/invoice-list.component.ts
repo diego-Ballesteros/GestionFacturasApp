@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common'; // Para *ngIf, *ngFor, pipes (date, currency)
 import { RouterModule } from '@angular/router'; // Para usar routerLink en el futuro
 import { InvoiceService, InvoiceSummary } from '../../services/invoice.service'; // Ajusta la ruta si es necesario
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-invoice-list',
@@ -18,7 +19,10 @@ export class InvoiceListComponent implements OnInit {
   isLoading: boolean = true;
   errorMessage: string | null = null;
 
-  constructor(private invoiceService: InvoiceService) { }
+  constructor(
+    private invoiceService: InvoiceService,
+    private router: Router
+  ) { }
 
   ngOnInit(): void {
     this.loadInvoices();
@@ -76,6 +80,6 @@ export class InvoiceListComponent implements OnInit {
   // Para el botón "Create New Invoice" (lo conectaremos con el enrutador)
   navigateToCreate(): void {
     console.log('Navigate to create invoice');
-    // this.router.navigate(['/invoices/new']);
+    this.router.navigate(['/invoices/new']);
   }
 }
