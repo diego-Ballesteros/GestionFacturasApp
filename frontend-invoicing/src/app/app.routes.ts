@@ -4,9 +4,9 @@ import { InvoiceFormComponent } from './components/invoice-form/invoice-form.com
 import { InvoiceDetailComponent } from './components/invoice-detail/invoice-detail.component'; 
 
 export const routes: Routes = [
-  { path: '', redirectTo: 'invoices', pathMatch: 'full' }, 
-  { path: 'invoices', component: InvoiceListComponent },  
+  { path: '', redirectTo: 'invoices', pathMatch: 'full' },
+  { path: 'invoices', component: InvoiceListComponent },
   { path: 'invoices/new', component: InvoiceFormComponent },
-  { path: 'invoices/edit/:id', component: InvoiceFormComponent },
+  { path: 'invoices/edit/:id', component: InvoiceFormComponent }, 
   { path: 'invoices/:id', component: InvoiceDetailComponent } 
 ];
