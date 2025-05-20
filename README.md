@@ -98,14 +98,12 @@ La solución implementa un ciclo completo de gestión de facturas:
         ```bash
         cd frontend-invoicing
         ```
-        *(Verifica que "frontend-invoicing" sea el nombre exacto de tu carpeta de frontend).*
 
 2.  **Instalar Dependencias de Node.js:**
     * Si es la primera vez o si hay cambios en `package.json`:
         ```bash
         npm install
         ```
-        *(O `npx npm install` si tienes problemas con la ejecución global de npm).*
 
 3.  **Verificar la Configuración de la API URL:**
     * El archivo de configuración para el entorno de desarrollo es `src/environments/environment.ts`.
@@ -121,7 +119,6 @@ La solución implementa un ciclo completo de gestión de facturas:
     ```bash
     ng serve -o
     ```
-    *(O `npx @angular/cli serve -o` si `ng` no está en tu PATH global).*
 
 5.  **Acceder a la Aplicación:**
     * La aplicación se abrirá automáticamente en tu navegador en `http://localhost:4200/`.
