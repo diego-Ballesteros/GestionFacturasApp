@@ -37,7 +37,7 @@ export interface InvoiceDetailItem {
 export interface Invoice {
     id: number;
     customerName: string;
-    invoiceDate: Date; // O string
+    invoiceDate: Date; 
     totalAmount: number;
     details: InvoiceDetailItem[];
 }
