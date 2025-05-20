@@ -1,0 +1,22 @@
+# Ignorar directorios de Git
+.git
+.gitignore
+.gitattributes
+
+# Ignorar directorios de build y de usuario
+bin/
+obj/
+Properties/launchSettings.json
+*.user
+*.suo
+
+# Ignorar archivos de Docker si están en el contexto de build por error
+Dockerfile
+.dockerignore
+
+# Ignorar archivos de IDE y SO
+.vs/
+.vscode/
+*.sln.dotsettings
+Thumbs.db
+*~
