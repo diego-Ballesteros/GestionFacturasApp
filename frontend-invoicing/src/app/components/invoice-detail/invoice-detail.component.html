@@ -1,0 +1,56 @@
+<div class="container mt-4">
+    <div *ngIf="isLoading" class="text-center alert alert-info">
+      <p>Loading invoice details...</p>
+    </div>
+  
+    <div *ngIf="!isLoading && errorMessage" class="alert alert-danger">
+      {{ errorMessage }}
+    </div>
+  
+    <div *ngIf="!isLoading && !invoice" class="alert alert-warning">
+      Invoice not found or could not be loaded.
+    </div>
+  
+    <div *ngIf="!isLoading && invoice">
+      <h2>Invoice Detail #{{ invoice.id }}</h2>
+      <hr>
+  
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <strong>Customer:</strong> {{ invoice.customerName }}
+        </div>
+        <div class="col-md-6 text-md-end">
+          <strong>Date:</strong> {{ invoice.invoiceDate | date:'longDate' }} </div>
+      </div>
+  
+      <h4>Items:</h4>
+      <table class="table table-sm table-bordered">
+        <thead class="table-light">
+          <tr>
+            <th>Product</th>
+            <th class="text-center">Quantity</th>
+            <th class="text-end">Unit Price</th>
+            <th class="text-end">Subtotal</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of invoice.details">
+            <td>{{ item.productName }}</td>
+            <td class="text-center">{{ item.quantity }}</td>
+            <td class="text-end">{{ item.unitPrice | currency:'USD':'symbol':'1.2-2' }}</td>
+            <td class="text-end">{{ item.subtotal | currency:'USD':'symbol':'1.2-2' }}</td>
+          </tr>
+        </tbody>
+        <tfoot class="table-group-divider">
+          <tr>
+            <td colspan="3" class="text-end"><strong>Total Amount:</strong></td>
+            <td class="text-end"><strong>{{ invoice.totalAmount | currency:'USD':'symbol':'1.2-2' }}</strong></td>
+          </tr>
+        </tfoot>
+      </table>
+  
+      <hr>
+      <button class="btn btn-secondary me-2" (click)="goBack()">Back to List</button>
+      <button class="btn btn-warning" (click)="navigateToEdit()">Edit Invoice</button>
+    </div>
+  </div>
