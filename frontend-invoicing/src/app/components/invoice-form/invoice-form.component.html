@@ -1,91 +1,107 @@
-<div class="container mt-4">
-    <h2>{{ pageTitle }}</h2>
+<div class="container mt-2 mb-5">
+    <div class="card shadow-sm">
+        <div class="font-bebas-neue"> <h2>{{ pageTitle }}</h2> </div>
+      <div class="card-body">
+        <div *ngIf="isLoading && !invoiceForm" class="alert alert-info text-center">
+          <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+          Loading form data...
+        </div>
   
-    <div *ngIf="isLoading && !invoiceForm" class="alert alert-info"> Loading form...
+        <div *ngIf="!isLoading && errorMessage" class="alert alert-danger">
+          <strong>Error:</strong> {{ errorMessage }}
+        </div>
+  
+        <form *ngIf="invoiceForm" [formGroup]="invoiceForm" (ngSubmit)="onSubmit()" novalidate>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="customerName" class="form-label">Customer Name <span class="text-danger">*</span></label>
+              <input type="text" id="customerName" class="form-control" formControlName="customerName"
+                     [ngClass]="{ 'is-invalid': invoiceForm.get('customerName')?.invalid && (invoiceForm.get('customerName')?.dirty || invoiceForm.get('customerName')?.touched) }">
+              <div *ngIf="invoiceForm.get('customerName')?.invalid && (invoiceForm.get('customerName')?.dirty || invoiceForm.get('customerName')?.touched)" class="invalid-feedback">
+                <div *ngIf="invoiceForm.get('customerName')?.errors?.['required']">Customer name is required.</div>
+                <div *ngIf="invoiceForm.get('customerName')?.errors?.['maxlength']">Customer name cannot exceed 100 characters.</div>
+              </div>
+            </div>
+  
+            <div class="col-md-6 mb-3">
+              <label for="invoiceDate" class="form-label">Invoice Date <span class="text-danger">*</span></label>
+              <input type="date" id="invoiceDate" class="form-control" formControlName="invoiceDate"
+                     [ngClass]="{ 'is-invalid': invoiceForm.get('invoiceDate')?.invalid && (invoiceForm.get('invoiceDate')?.dirty || invoiceForm.get('invoiceDate')?.touched) }">
+              <div *ngIf="invoiceForm.get('invoiceDate')?.invalid && (invoiceForm.get('invoiceDate')?.dirty || invoiceForm.get('invoiceDate')?.touched)" class="invalid-feedback">
+                <div *ngIf="invoiceForm.get('invoiceDate')?.errors?.['required']">Invoice date is required.</div>
+                <div *ngIf="invoiceForm.get('invoiceDate')?.errors?.['invoiceDateCannotBeFuture']">Invoice date cannot be in the future.</div>
+              </div>
+            </div>
+          </div>
+  
+          <hr class="my-4">
+          <h4>Invoice Details <span class="text-danger">*</span></h4>
+  
+          <div formArrayName="details">
+            <div *ngFor="let detailGroup of details.controls; let i = index" [formGroupName]="i" class="row gx-2 gy-2 align-items-start mb-3 p-3 border rounded position-relative">
+              <div class="col-md-4">
+                <label [for]="'productName' + i" class="form-label">Product Name <span class="text-danger">*</span></label>
+                <input type="text" [id]="'productName' + i" class="form-control form-control-sm" formControlName="productName"
+                       [ngClass]="{ 'is-invalid': details.controls[i]?.get('productName')?.invalid && (details.controls[i]?.get('productName')?.dirty || details.controls[i]?.get('productName')?.touched) }">
+                <div *ngIf="details.controls[i]?.get('productName')?.invalid && (details.controls[i]?.get('productName')?.dirty || details.controls[i]?.get('productName')?.touched)" class="invalid-feedback">
+                  <div *ngIf="details.controls[i]?.get('productName')?.errors?.['required']">Product name is required.</div>
+                </div>
+              </div>
+  
+              <div class="col-md-2">
+                <label [for]="'quantity' + i" class="form-label">Qty <span class="text-danger">*</span></label>
+                <input type="number" [id]="'quantity' + i" class="form-control form-control-sm" formControlName="quantity"
+                       [ngClass]="{ 'is-invalid': details.controls[i]?.get('quantity')?.invalid && (details.controls[i]?.get('quantity')?.dirty || details.controls[i]?.get('quantity')?.touched) }">
+                <div *ngIf="details.controls[i]?.get('quantity')?.invalid && (details.controls[i]?.get('quantity')?.dirty || details.controls[i]?.get('quantity')?.touched)" class="invalid-feedback">
+                  <div *ngIf="details.controls[i]?.get('quantity')?.errors?.['required']">Qty is req.</div>
+                  <div *ngIf="details.controls[i]?.get('quantity')?.errors?.['min']">Min 1.</div>
+                </div>
+              </div>
+  
+              <div class="col-md-3">
+                <label [for]="'unitPrice' + i" class="form-label">Unit Price <span class="text-danger">*</span></label>
+                <input type="number" step="0.01" [id]="'unitPrice' + i" class="form-control form-control-sm" formControlName="unitPrice"
+                       [ngClass]="{ 'is-invalid': details.controls[i]?.get('unitPrice')?.invalid && (details.controls[i]?.get('unitPrice')?.dirty || details.controls[i]?.get('unitPrice')?.touched) }">
+                <div *ngIf="details.controls[i]?.get('unitPrice')?.invalid && (details.controls[i]?.get('unitPrice')?.dirty || details.controls[i]?.get('unitPrice')?.touched)" class="invalid-feedback">
+                  <div *ngIf="details.controls[i]?.get('unitPrice')?.errors?.['required']">Price is req.</div>
+                  <div *ngIf="details.controls[i]?.get('unitPrice')?.errors?.['min']">Min 0.01.</div>
+                </div>
+              </div>
+  
+              <div class="col-md-2">
+                  <label class="form-label">Subtotal</label>
+                  <div class="form-control-plaintext">{{ (details.controls[i]?.get('quantity')?.value * details.controls[i]?.get('unitPrice')?.value) | currency:'USD':'symbol':'1.2-2' }}</div>
+              </div>
+  
+              <div class="col-md-1 d-flex align-items-end justify-content-end">
+                <button type="button" class="btn btn-sm btn-outline-danger" (click)="removeInvoiceDetail(i)" [disabled]="details.length <= 1" title="Remove Detail">
+                  <i class="bi bi-x-lg"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div *ngIf="invoiceForm.get('details')?.hasError('minlength') && invoiceForm.get('details')?.touched" class="text-danger small mt-0 mb-2">
+           At least one detail item is required.
+          </div>
+  
+  
+          <button type="button" class="btn btn-outline-primary btn-sm mb-3" (click)="addInvoiceDetail()">
+            <i class="bi bi-plus-circle me-1"></i>Add Detail Item
+          </button>
+          
+          <div class="mb-3 text-end" *ngIf="details.length > 0">
+              <h4 class="fw-bold">Total Invoice Amount: {{ calculateGrandTotal() | currency:'USD':'symbol':'1.2-2' }}</h4>
+          </div>
+          <hr class="my-4">
+  
+          <div class="d-flex justify-content-end">
+            <button type="button" class="btn btn-secondary me-2" (click)="goBack()">Cancel</button>
+            <button type="submit" class="btn btn-success" [disabled]="invoiceForm.invalid || isLoading">
+              <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+              {{ isLoading ? 'Saving...' : (isEditMode ? 'Update Invoice' : 'Save Invoice') }}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
-  
-    <div *ngIf="errorMessage" class="alert alert-danger">
-      {{ errorMessage }}
-    </div>
-  
-    <form *ngIf="invoiceForm" [formGroup]="invoiceForm" (ngSubmit)="onSubmit()">
-  
-      <div class="mb-3">
-        <label for="customerName" class="form-label">Customer Name</label>
-        <input type="text" id="customerName" class="form-control" formControlName="customerName"
-               [ngClass]="{ 'is-invalid': invoiceForm.get('customerName')?.invalid && (invoiceForm.get('customerName')?.dirty || invoiceForm.get('customerName')?.touched) }">
-        <div *ngIf="invoiceForm.get('customerName')?.invalid && (invoiceForm.get('customerName')?.dirty || invoiceForm.get('customerName')?.touched)"
-             class="invalid-feedback">
-          <div *ngIf="invoiceForm.get('customerName')?.errors?.['required']">Customer name is required.</div>
-          <div *ngIf="invoiceForm.get('customerName')?.errors?.['maxlength']">Customer name cannot exceed 100 characters.</div>
-        </div>
-      </div>
-  
-      <div class="mb-3">
-        <label for="invoiceDate" class="form-label">Invoice Date</label>
-        <input type="date" id="invoiceDate" class="form-control" formControlName="invoiceDate"
-               [ngClass]="{ 'is-invalid': invoiceForm.get('invoiceDate')?.invalid && (invoiceForm.get('invoiceDate')?.dirty || invoiceForm.get('invoiceDate')?.touched) }">
-        <div *ngIf="invoiceForm.get('invoiceDate')?.invalid && (invoiceForm.get('invoiceDate')?.dirty || invoiceForm.get('invoiceDate')?.touched)"
-             class="invalid-feedback">
-          <div *ngIf="invoiceForm.get('invoiceDate')?.errors?.['required']">Invoice date is required.</div>
-        </div>
-      </div>
-  
-      <hr>
-      <h4>Invoice Details</h4>
-  
-      <div formArrayName="details">
-        <div *ngFor="let detailGroup of details.controls; let i = index" [formGroupName]="i" class="row g-3 align-items-center mb-3 p-3 border rounded">
-          <h5>Detail #{{ i + 1 }}</h5>
-          <div class="col-md-4">
-            <label [for]="'productName' + i" class="form-label">Product Name</label>
-            <input type="text" [id]="'productName' + i" class="form-control" formControlName="productName"
-                   [ngClass]="{ 'is-invalid': details.controls[i]?.get('productName')?.invalid && (details.controls[i]?.get('productName')?.dirty || details.controls[i]?.get('productName')?.touched) }">
-            <div *ngIf="details.controls[i]?.get('productName')?.invalid && (details.controls[i]?.get('productName')?.dirty || details.controls[i]?.get('productName')?.touched)"
-                 class="invalid-feedback">
-              <div *ngIf="details.controls[i]?.get('productName')?.errors?.['required']">Product name is required.</div>
-            </div>
-          </div>
-          <div class="col-md-2">
-            <label [for]="'quantity' + i" class="form-label">Quantity</label>
-            <input type="number" [id]="'quantity' + i" class="form-control" formControlName="quantity"
-                   [ngClass]="{ 'is-invalid': details.controls[i]?.get('quantity')?.invalid && (details.controls[i]?.get('quantity')?.dirty || details.controls[i]?.get('quantity')?.touched) }">
-            <div *ngIf="details.controls[i]?.get('quantity')?.invalid && (details.controls[i]?.get('quantity')?.dirty || details.controls[i]?.get('quantity')?.touched)"
-                 class="invalid-feedback">
-                  <div *ngIf="details.controls[i]?.get('quantity')?.errors?.['required']">Quantity is required.</div>
-                  <div *ngIf="details.controls[i]?.get('quantity')?.errors?.['min']">Quantity must be at least 1.</div>
-            </div>
-          </div>
-          <div class="col-md-3">
-            <label [for]="'unitPrice' + i" class="form-label">Unit Price</label>
-            <input type="number" step="0.01" [id]="'unitPrice' + i" class="form-control" formControlName="unitPrice"
-                   [ngClass]="{ 'is-invalid': details.controls[i]?.get('unitPrice')?.invalid && (details.controls[i]?.get('unitPrice')?.dirty || details.controls[i]?.get('unitPrice')?.touched) }">
-            <div *ngIf="details.controls[i]?.get('unitPrice')?.invalid && (details.controls[i]?.get('unitPrice')?.dirty || details.controls[i]?.get('unitPrice')?.touched)"
-                 class="invalid-feedback">
-                  <div *ngIf="details.controls[i]?.get('unitPrice')?.errors?.['required']">Unit price is required.</div>
-                  <div *ngIf="details.controls[i]?.get('unitPrice')?.errors?.['min']">Unit price must be greater than 0.01.</div>
-            </div>
-          </div>
-          <div class="col-md-2">
-              <label class="form-label">Subtotal</label>
-              <div>{{ (details.controls[i]?.get('quantity')?.value * details.controls[i]?.get('unitPrice')?.value) | currency:'USD':'symbol':'1.2-2' }}</div>
-          </div>
-          <div class="col-md-1 d-flex align-items-end">
-            <button type="button" class="btn btn-sm btn-danger" (click)="removeInvoiceDetail(i)" [disabled]="details.length <= 1">Remove</button>
-          </div>
-        </div>
-      </div>
-  
-      <button type="button" class="btn btn-secondary mb-3" (click)="addInvoiceDetail()">Add Detail Item</button>
-      
-      <div class="mb-3" *ngIf="invoiceForm.get('details')?.value.length > 0"> <h4>Total Invoice Amount: {{ calculateGrandTotal() | currency:'USD':'symbol':'1.2-2' }}</h4>
-      </div>
-      <hr>
-  
-      <button type="submit" class="btn btn-success me-2" [disabled]="invoiceForm.invalid || isLoading">
-        <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-        {{ isLoading ? 'Saving...' : (isEditMode ? 'Update Invoice' : 'Save Invoice') }}
-      </button>
-      <button type="button" class="btn btn-link" (click)="goBack()">Cancel</button>
-    </form>
   </div>
