@@ -48,8 +48,8 @@ export class InvoiceListComponent implements OnInit {
   }
 
   viewInvoice(id: number): void {
-    console.log('View invoice:', id);
-    this.router.navigate(['/invoices/edit', id]);
+    console.log('View invoice details for ID:', id);
+    this.router.navigate(['/invoices', id]);
   }
 
   editInvoice(id: number): void {
