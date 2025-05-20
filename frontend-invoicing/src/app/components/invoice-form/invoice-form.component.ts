@@ -31,6 +31,9 @@ export class InvoiceFormComponent implements OnInit {
   private location = inject(Location);
 
   ngOnInit(): void {
+
+    this.initForm();
+
     this.currentInvoiceId = Number(this.route.snapshot.paramMap.get('id')); 
 
     if (this.currentInvoiceId) {
@@ -40,23 +43,31 @@ export class InvoiceFormComponent implements OnInit {
     } else {
       this.isEditMode = false;
       this.pageTitle = 'Create New Invoice';
-      this.initForm();
-      this.addInvoiceDetail(); 
+      if (this.details.length === 0) { 
+        this.addInvoiceDetail();
+      }
     }
   }
 
-  initForm(invoice?: Invoice): void { // Acepta una factura opcional para poblar el formulario
+  initForm(invoice?: Invoice): void {
     this.invoiceForm = this.fb.group({
-      customerName: [invoice?.customerName || '', [Validators.required, Validators.maxLength(100)]],
-      invoiceDate: [invoice ? this.formatDateForInput(invoice.invoiceDate) : this.getTodayDateString(), [Validators.required]],
+      customerName: ['', [Validators.required, Validators.maxLength(100)]],
+      invoiceDate: [this.getTodayDateString(), [Validators.required]],
       details: this.fb.array(
-        invoice?.details ? invoice.details.map(detail => this.createDetailGroup(detail)) : [],
+        [], 
         [Validators.required, Validators.minLength(1)]
       )
     });
 
-    if (!this.isEditMode && this.details.length === 0) {
-        this.addInvoiceDetail();
+    if (invoice) {
+      this.invoiceForm.patchValue({
+        customerName: invoice.customerName,
+        invoiceDate: this.formatDateForInput(invoice.invoiceDate)
+      });
+      this.details.clear();
+      invoice.details.forEach(detail => {
+        this.details.push(this.createDetailGroup(detail));
+      });
     }
   }
 
@@ -75,13 +86,19 @@ export class InvoiceFormComponent implements OnInit {
   }
 
   loadInvoiceForEdit(id: number): void {
-    this.isLoading = true;
+    this.isLoading = true; 
+    this.errorMessage = null;
     this.invoiceService.getInvoiceById(id).subscribe({
       next: (invoiceData) => {
         if (invoiceData) {
-          this.initForm(invoiceData);
+          this.initForm(invoiceData); 
         } else {
-          this.errorMessage = `Invoice with ID ${id} not found.`;         
+          this.errorMessage = `Invoice with ID ${id} not found.`;
+          this.pageTitle = 'Create New Invoice'; 
+          this.isEditMode = false;
+          this.currentInvoiceId = null;
+          this.initForm();
+          if (this.details.length === 0) this.addInvoiceDetail();
         }
         this.isLoading = false;
       },
@@ -89,6 +106,8 @@ export class InvoiceFormComponent implements OnInit {
         console.error('Error fetching invoice for edit:', err);
         this.errorMessage = 'Failed to load invoice data.';
         this.isLoading = false;
+        this.initForm();
+        if (this.details.length === 0) this.addInvoiceDetail();
       }
     });
   }
@@ -100,7 +119,6 @@ export class InvoiceFormComponent implements OnInit {
   
   newInvoiceDetail(detail?: InvoiceDetailItem): FormGroup {
     return this.fb.group({
-      // No necesitamos el 'id' del detalle en el formulario para este enfoque de "reemplazar"
       productName: [detail?.productName || '', [Validators.required, Validators.maxLength(100)]],
       quantity: [detail?.quantity || 1, [Validators.required, Validators.min(1)]],
       unitPrice: [detail?.unitPrice || 0.01, [Validators.required, Validators.min(0.01)]]
@@ -142,6 +160,7 @@ export class InvoiceFormComponent implements OnInit {
   }
 
   onSubmit(): void {
+
     if (this.invoiceForm.invalid) {
       this.errorMessage = 'Please correct the form errors.';
       this.invoiceForm.markAllAsTouched();
@@ -155,8 +174,8 @@ export class InvoiceFormComponent implements OnInit {
 
     const payload: CreateInvoicePayload = {
       customerName: formValue.customerName,
-      invoiceDate: new Date(formValue.invoiceDate), // Convertir string de fecha a objeto Date
-      details: formValue.details.map((detail: any) => ({ // Mapear los detalles del formulario al DTO
+      invoiceDate: new Date(formValue.invoiceDate),
+      details: formValue.details.map((detail: any) => ({ 
         productName: detail.productName,
         quantity: Number(detail.quantity),
         unitPrice: Number(detail.unitPrice)
@@ -167,21 +186,25 @@ export class InvoiceFormComponent implements OnInit {
       // MODO EDICIÓN
       this.invoiceService.updateInvoice(this.currentInvoiceId, payload).subscribe({
         next: (updatedInvoice) => {
-          console.log('Invoice updated successfully!', updatedInvoice);
           this.isLoading = false;
-          this.router.navigate(['/invoices']); // O al detalle: ['/invoices', updatedInvoice.id]
+          this.router.navigate(['/invoices']); 
         },
-        error: (err) => this.handleFormError(err, 'update')
+        error: (err) => {
+          console.error('Error updating invoice from service:', err); 
+          this.handleFormError(err, 'update');
+        }
       });
     } else {
       // MODO CREACIÓN
       this.invoiceService.createInvoice(payload).subscribe({
         next: (response) => {
-          console.log('Invoice created successfully!', response);
           this.isLoading = false;
           this.router.navigate(['/invoices']);
         },
-        error: (err) => this.handleFormError(err, 'create')
+        error: (err) => {
+          console.error('Error creating invoice:', err); 
+          this.handleFormError(err, 'create');
+        }
       });
     }    
 }
@@ -190,10 +213,9 @@ export class InvoiceFormComponent implements OnInit {
     console.error(`Error ${action}ing invoice:`, err);
     this.errorMessage = `Failed to ${action} invoice. Please try again.`;
     if (err.error && typeof err.error === 'object') {
-        // Si el backend devuelve un objeto de error con una propiedad 'Message' o 'errors'
         if (err.error.ErrorMessage) {
             this.errorMessage = err.error.ErrorMessage;
-        } else if (err.error.errors) { // Común para errores de validación de FluentValidation desde el backend
+        } else if (err.error.errors) { 
             const validationErrors = err.error.errors;
             const firstErrorKey = Object.keys(validationErrors)[0];
             this.errorMessage = validationErrors[firstErrorKey]?.join(', ') || `Failed to ${action} invoice.`;
