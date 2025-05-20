@@ -35,7 +35,12 @@ builder.Services.AddCors(options =>
                       });
 });
 
+var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+Console.WriteLine($"Application will listen on port: {port}");
+builder.WebHost.UseUrls($"http://*:{port}");
+
 var app = builder.Build();
+
 
 app.UseGlobalExceptionHandler();
 
@@ -52,7 +57,7 @@ else
     app.UseHsts(); // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
 }
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 
 app.UseCors();
 app.UseAuthorization();
