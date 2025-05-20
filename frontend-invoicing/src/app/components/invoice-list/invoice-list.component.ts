@@ -57,7 +57,7 @@ export class InvoiceListComponent implements OnInit {
 
   editInvoice(id: number): void {
     console.log('Edit invoice:', id);
-    // Navegar al formulario de edición: this.router.navigate(['/invoices/edit', id]);
+    this.router.navigate(['/invoices/edit', id]);
   }
 
   deleteInvoice(id: number): void {

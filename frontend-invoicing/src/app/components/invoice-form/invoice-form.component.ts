@@ -1,50 +1,72 @@
-import { Component, OnInit, inject } from '@angular/core'; // Importa inject
-import { CommonModule } from '@angular/common'; // Para *ngIf, *ngFor, etc.
-import { ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Validators } from '@angular/forms'; // Para Reactive Forms
-import { Router } from '@angular/router'; // Para navegar después de crear
-import { InvoiceService, CreateInvoicePayload, CreateInvoiceDetailPayload } from '../../services/invoice.service'; // Tu servicio e interfaces
+import { Component, OnInit, inject } from '@angular/core';
+import { CommonModule, Location } from '@angular/common'; 
+import { ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Validators } from '@angular/forms';
+import { Router, ActivatedRoute } from '@angular/router'; 
+import { InvoiceService, CreateInvoicePayload, Invoice, InvoiceDetailItem } from '../../services/invoice.service'; 
+
+
 
 @Component({
   selector: 'app-invoice-form',
   standalone: true,
   imports: [
     CommonModule,
-    ReactiveFormsModule // <--- IMPORTANTE para [formGroup], formControlName, etc.
+    ReactiveFormsModule 
   ],
   templateUrl: './invoice-form.component.html',
   styleUrls: ['./invoice-form.component.scss']
 })
 export class InvoiceFormComponent implements OnInit {
-  invoiceForm!: FormGroup; // '!' indica que se inicializará en ngOnInit o el constructor
+  invoiceForm!: FormGroup; 
   isLoading: boolean = false;
   errorMessage: string | null = null;
+  isEditMode: boolean = false;
+  currentInvoiceId: number | null = null;
+  pageTitle: string = 'Create New Invoice';
 
-  // Inyección de dependencias moderna con inject() o a través del constructor
   private fb = inject(FormBuilder);
   private invoiceService = inject(InvoiceService);
   private router = inject(Router);
-  // Alternativa con constructor:
-  // constructor(
-  //   private fb: FormBuilder,
-  //   private invoiceService: InvoiceService,
-  //   private router: Router
-  // ) {}
+  private route = inject(ActivatedRoute); 
+  private location = inject(Location);
 
   ngOnInit(): void {
-    this.initForm();
+    this.currentInvoiceId = Number(this.route.snapshot.paramMap.get('id')); 
+
+    if (this.currentInvoiceId) {
+      this.isEditMode = true;
+      this.pageTitle = `Edit Invoice #${this.currentInvoiceId}`;
+      this.loadInvoiceForEdit(this.currentInvoiceId);
+    } else {
+      this.isEditMode = false;
+      this.pageTitle = 'Create New Invoice';
+      this.initForm();
+      this.addInvoiceDetail(); 
+    }
   }
 
-  initForm(): void {
+  initForm(invoice?: Invoice): void { // Acepta una factura opcional para poblar el formulario
     this.invoiceForm = this.fb.group({
-      customerName: ['', [Validators.required, Validators.maxLength(100)]],
-      invoiceDate: [this.getTodayDateString(), [Validators.required]], // Fecha de hoy por defecto
-      details: this.fb.array([], [Validators.required, Validators.minLength(1)]) // FormArray para los detalles, al menos uno es requerido
+      customerName: [invoice?.customerName || '', [Validators.required, Validators.maxLength(100)]],
+      invoiceDate: [invoice ? this.formatDateForInput(invoice.invoiceDate) : this.getTodayDateString(), [Validators.required]],
+      details: this.fb.array(
+        invoice?.details ? invoice.details.map(detail => this.createDetailGroup(detail)) : [],
+        [Validators.required, Validators.minLength(1)]
+      )
     });
-    // Añadir al menos un detalle por defecto al crear el formulario
-    this.addInvoiceDetail();
+
+    if (!this.isEditMode && this.details.length === 0) {
+        this.addInvoiceDetail();
+    }
   }
 
-  // Helper para obtener la fecha de hoy en formato YYYY-MM-DD para el input date
+  formatDateForInput(date: Date | string): string {
+    const d = new Date(date);
+    const month = (d.getMonth() + 1).toString().padStart(2, '0');
+    const day = d.getDate().toString().padStart(2, '0');
+    return `<span class="math-inline">\{d\.getFullYear\(\)\}\-</span>{month}-${day}`;
+  }
+
   getTodayDateString(): string {
     const today = new Date();
     const month = (today.getMonth() + 1).toString().padStart(2, '0');
@@ -52,32 +74,55 @@ export class InvoiceFormComponent implements OnInit {
     return `<span class="math-inline">\{today\.getFullYear\(\)\}\-</span>{month}-${day}`;
   }
 
-  // Getter para acceder fácilmente al FormArray de detalles en la plantilla
+  loadInvoiceForEdit(id: number): void {
+    this.isLoading = true;
+    this.invoiceService.getInvoiceById(id).subscribe({
+      next: (invoiceData) => {
+        if (invoiceData) {
+          this.initForm(invoiceData);
+        } else {
+          this.errorMessage = `Invoice with ID ${id} not found.`;         
+        }
+        this.isLoading = false;
+      },
+      error: (err) => {
+        console.error('Error fetching invoice for edit:', err);
+        this.errorMessage = 'Failed to load invoice data.';
+        this.isLoading = false;
+      }
+    });
+  }
+
   get details(): FormArray {
     return this.invoiceForm.get('details') as FormArray;
   }
 
-  // Método para crear un FormGroup para un nuevo detalle de factura
-  newInvoiceDetail(): FormGroup {
+  
+  newInvoiceDetail(detail?: InvoiceDetailItem): FormGroup {
     return this.fb.group({
-      productName: ['', [Validators.required, Validators.maxLength(100)]],
-      quantity: [1, [Validators.required, Validators.min(1)]],
-      unitPrice: [0.01, [Validators.required, Validators.min(0.01)]]
-      // No necesitamos Subtotal aquí, se calculará al enviar o en el backend
+      // No necesitamos el 'id' del detalle en el formulario para este enfoque de "reemplazar"
+      productName: [detail?.productName || '', [Validators.required, Validators.maxLength(100)]],
+      quantity: [detail?.quantity || 1, [Validators.required, Validators.min(1)]],
+      unitPrice: [detail?.unitPrice || 0.01, [Validators.required, Validators.min(0.01)]]
     });
   }
 
-  // Método para añadir un nuevo detalle al FormArray
+  createDetailGroup(detail: InvoiceDetailItem): FormGroup {
+    return this.fb.group({
+        productName: [detail.productName, [Validators.required, Validators.maxLength(100)]],
+        quantity: [detail.quantity, [Validators.required, Validators.min(1)]],
+        unitPrice: [detail.unitPrice, [Validators.required, Validators.min(0.01)]]
+    });
+  }
+
   addInvoiceDetail(): void {
     this.details.push(this.newInvoiceDetail());
   }
 
-  // Método para eliminar un detalle del FormArray por su índice
   removeInvoiceDetail(index: number): void {
-    if (this.details.length > 1) { // No permitir eliminar si solo queda uno (por Validators.minLength(1))
+    if (this.details.length > 1) { 
         this.details.removeAt(index);
-    } else {
-        // Podrías mostrar un mensaje al usuario
+    } else {       
         console.warn("Cannot remove the last detail item. At least one detail is required.");
     }
   }
@@ -92,14 +137,13 @@ export class InvoiceFormComponent implements OnInit {
     return total;
   }
 
-  goBackToList(): void {
-    this.router.navigate(['/invoices']); // Navega de regreso a la lista de facturas
+  goBack(): void { 
+    this.location.back(); 
   }
 
   onSubmit(): void {
     if (this.invoiceForm.invalid) {
       this.errorMessage = 'Please correct the form errors.';
-      // Marcar todos los campos como "touched" para que se muestren los errores de validación
       this.invoiceForm.markAllAsTouched();
       return;
     }
@@ -119,25 +163,44 @@ export class InvoiceFormComponent implements OnInit {
       }))
     };
 
-    this.invoiceService.createInvoice(payload).subscribe({
-      next: (response) => {
-        console.log('Invoice created successfully!', response);
-        this.isLoading = false;
-        // Navegar a la lista de facturas o a la vista de detalle de la nueva factura
-        this.router.navigate(['/invoices']); // Redirige a la lista
-        // Opcional: this.router.navigate(['/invoices', response.invoiceId]); // Redirige al detalle
-      },
-      error: (err) => {
-        console.error('Error creating invoice:', err);
-        this.errorMessage = 'Failed to create invoice. Please try again.';
-        // Podrías intentar parsear el error del backend si viene en un formato específico
-        if (err.error && err.error.ErrorMessage) {
+    if (this.isEditMode && this.currentInvoiceId) {
+      // MODO EDICIÓN
+      this.invoiceService.updateInvoice(this.currentInvoiceId, payload).subscribe({
+        next: (updatedInvoice) => {
+          console.log('Invoice updated successfully!', updatedInvoice);
+          this.isLoading = false;
+          this.router.navigate(['/invoices']); // O al detalle: ['/invoices', updatedInvoice.id]
+        },
+        error: (err) => this.handleFormError(err, 'update')
+      });
+    } else {
+      // MODO CREACIÓN
+      this.invoiceService.createInvoice(payload).subscribe({
+        next: (response) => {
+          console.log('Invoice created successfully!', response);
+          this.isLoading = false;
+          this.router.navigate(['/invoices']);
+        },
+        error: (err) => this.handleFormError(err, 'create')
+      });
+    }    
+}
+
+  private handleFormError(err: any, action: 'create' | 'update'): void {
+    console.error(`Error ${action}ing invoice:`, err);
+    this.errorMessage = `Failed to ${action} invoice. Please try again.`;
+    if (err.error && typeof err.error === 'object') {
+        // Si el backend devuelve un objeto de error con una propiedad 'Message' o 'errors'
+        if (err.error.ErrorMessage) {
             this.errorMessage = err.error.ErrorMessage;
-        } else if (err.message) {
-            this.errorMessage = err.message;
+        } else if (err.error.errors) { // Común para errores de validación de FluentValidation desde el backend
+            const validationErrors = err.error.errors;
+            const firstErrorKey = Object.keys(validationErrors)[0];
+            this.errorMessage = validationErrors[firstErrorKey]?.join(', ') || `Failed to ${action} invoice.`;
         }
-        this.isLoading = false;
-      }
-    });
+    } else if (err.message) {
+        this.errorMessage = err.message;
+    }
+    this.isLoading = false;
   }
 }
